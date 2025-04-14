@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}About - AI Experiments System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1>About this Project</h1>
+    </div>
+    <div class="card-body">
+        <h2>System for Experiments with Artificial Intelligence</h2>
+        
+        <p class="lead">
+            This web-based system allows students and teachers to create, train, and test simple AI models 
+            while practicing database work, result visualization, and using basic algorithms.
+        </p>
+        
+        <hr>
+        
+        <h3>Project Goals</h3>
+        
+        <p>This platform was created to help students understand and experiment with AI concepts through hands-on learning.</p>
+        
+        <h4>The system enables users to:</h4>
+        <ul>
+            <li>Access different AI models (perceptron, linear regression, logistic regression, neural network)</li>
+            <li>Upload datasets to train these models</li>
+            <li>Visualize training results (accuracy, graphs, tables)</li>
+            <li>Provide input to trained systems and receive predictions</li>
+            <li>Share and comment on results with other students or teachers</li>
+        </ul>
+        
+        <h3>Technical Implementation</h3>
+        
+        <p>The system is built using the following technologies:</p>
+        <ul>
+            <li><strong>Flask</strong> - Web framework</li>
+            <li><strong>Flask-Login</strong> - Session management</li>
+            <li><strong>Flask-SQLAlchemy</strong> - Database ORM</li>
+            <li><strong>Flask-Bootstrap</strong> - Frontend styling</li>
+            <li><strong>Scikit-learn</strong> - Machine learning algorithms</li>
+            <li><strong>Matplotlib/Plotly</strong> - Data visualization</li>
+        </ul>
+        
+        <h3>User Roles</h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h4>Student Role</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Upload datasets</li>
+                            <li>Train AI models</li>
+                            <li>View and use personal models</li>
+                            <li>Make predictions</li>
+                            <li>View visualizations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h4>Teacher Role</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>All student capabilities</li>
+                            <li>Access to all student-trained models</li>
+                            <li>Ability to comment on student work</li>
+                            <li>View all datasets and models</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

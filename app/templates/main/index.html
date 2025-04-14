@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Experiments System - Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">System for Experiments with Artificial Intelligence</h1>
+    <p class="lead">
+        A web-based system where students and teachers can create, train, and test simple AI models
+        while practicing database work, result visualization, and using basic algorithms.
+    </p>
+    <hr class="my-4">
+    <p>
+        This platform allows you to:
+    </p>
+    <ul>
+        <li>Upload datasets and train various AI models on them</li>
+        <li>Visualize training results and model performance</li>
+        <li>Make predictions with your trained models</li>
+        <li>Share and discuss results with other students and teachers</li>
+    </ul>
+    <p class="lead">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">Get Started</a>
+        <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('main.about') }}" role="button">Learn More</a>
+    </p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Simple AI Models</h5>
+                <p class="card-text">
+                    Train and experiment with various algorithms including perceptron, 
+                    linear regression, logistic regression, and neural networks.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Data Visualization</h5>
+                <p class="card-text">
+                    Visualize your training results with interactive graphs
+                    showing decision boundaries, regression lines, and more.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Collaborative Learning</h5>
+                <p class="card-text">
+                    Share your trained models with teachers and peers,
+                    receive feedback, and learn from others' experiments.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

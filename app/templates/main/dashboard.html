@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - AI Experiments System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1>Dashboard</h1>
+        <p class="text-muted">
+            Welcome, {{ current_user.name or current_user.username }}
+            <span class="badge badge-{% if current_user.is_teacher() %}info{% else %}success{% endif %}">
+                {% if current_user.is_teacher() %}Teacher{% else %}Student{% endif %}
+            </span>
+        </p>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Recent Datasets</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if datasets %}
+                        <div class="list-group">
+                            {% for dataset in datasets %}
+                            <a href="{{ url_for('datasets.view', id=dataset.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ dataset.name }}</h5>
+                                    <small>{{ dataset.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <p class="mb-1">{{ dataset.description[:100] + '...' if dataset.description and dataset.description|length > 100 else dataset.description or 'No description' }}</p>
+                                <small>Rows: {{ dataset.row_count }} | Columns: {{ dataset.column_count }}</small>
+                                {% if current_user.is_teacher() and dataset.user_id != current_user.id %}
+                                <span class="badge badge-secondary float-right">By {{ dataset.owner.username }}</span>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p>No datasets yet. <a href="{{ url_for('datasets.create') }}">Upload a dataset</a> to get started.</p>
+                        {% endif %}
+                        <div class="mt-3">
+                            <a href="{{ url_for('datasets.index') }}" class="btn btn-outline-primary">View All Datasets</a>
+                            <a href="{{ url_for('datasets.create') }}" class="btn btn-primary">Upload New Dataset</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Recent Models</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if models %}
+                        <div class="list-group">
+                            {% for model in models %}
+                            <a href="{{ url_for('models.view', id=model.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ model.name }}</h5>
+                                    <small>{{ model.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <p class="mb-1">{{ model.description[:100] + '...' if model.description and model.description|length > 100 else model.description or 'No description' }}</p>
+                                <small>
+                                    Type: {{ model.model_type }} | 
+                                    {% if model.accuracy is not none %}
+                                    Accuracy: {{ '%0.2f' % (model.accuracy * 100) }}%
+                                    {% elif model.loss is not none %}
+                                    Loss: {{ '%0.4f' % model.loss }}
+                                    {% endif %}
+                                </small>
+                                {% if current_user.is_teacher() and model.user_id != current_user.id %}
+                                <span class="badge badge-secondary float-right">By {{ model.owner.username }}</span>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p>No models trained yet. <a href="{{ url_for('models.create') }}">Train a model</a> to get started.</p>
+                        {% endif %}
+                        <div class="mt-3">
+                            <a href="{{ url_for('models.index') }}" class="btn btn-outline-primary">View All Models</a>
+                            <a href="{{ url_for('models.create') }}" class="btn btn-primary">Train New Model</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card text-center mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Upload Dataset</h5>
+                                <p class="card-text">Add a new dataset for training models</p>
+                                <a href="{{ url_for('datasets.create') }}" class="btn btn-primary">Upload</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Train Model</h5>
+                                <p class="card-text">Create a new AI model using your datasets</p>
+                                <a href="{{ url_for('models.create') }}" class="btn btn-primary">Train</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Browse Datasets</h5>
+                                <p class="card-text">Explore all available datasets</p>
+                                <a href="{{ url_for('datasets.index') }}" class="btn btn-primary">Browse</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Browse Models</h5>
+                                <p class="card-text">Explore all trained AI models</p>
+                                <a href="{{ url_for('models.index') }}" class="btn btn-primary">Browse</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
