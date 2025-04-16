@@ -1,30 +1,30 @@
 import os
-from dotenv import load_dotenv
-
-basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, '.env'))
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
     
+    # File storage settings
+    DATA_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    DATASET_FOLDER = os.path.join(DATA_FOLDER, 'datasets')
+    MODEL_FOLDER = os.path.join(DATA_FOLDER, 'models')
+    
+    # File upload settings
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
+    @staticmethod
+    def init_app(app):
+        # Create necessary directories
+        os.makedirs(Config.DATASET_FOLDER, exist_ok=True)
+        os.makedirs(Config.MODEL_FOLDER, exist_ok=True)
+
 class DevelopmentConfig(Config):
     DEBUG = True
 
-class TestingConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'  # Use in-memory database for testing
-    
 class ProductionConfig(Config):
     DEBUG = False
-    
+
 config = {
     'development': DevelopmentConfig,
-    'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
 } 

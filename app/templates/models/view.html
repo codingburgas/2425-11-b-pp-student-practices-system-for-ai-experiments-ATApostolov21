@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block title %}{{ model.name }} | AI Experiments{% endblock %}
+
+{# Add a dictionary for metric explanations #}
+{% set metric_explanations = {
+    'accuracy': 'Percentage of correct predictions out of all predictions.',
+    'precision': 'Of the predictions made for the positive class, how many were actually positive?',
+    'recall': 'Of all the actual positive instances, how many did the model correctly predict?',
+    'f1_score': 'Harmonic mean of precision and recall, balancing both.',
+    'mse': 'Mean Squared Error: Average of the squared differences between actual and predicted values (lower is better). Penalizes large errors.',
+    'mae': 'Mean Absolute Error: Average absolute difference between actual and predicted values (lower is better). Easier to interpret in original units.',
+    'r2_score': 'R-squared: Proportion of the variance in the target variable explained by the model (closer to 1 is better).',
+    'confusion_matrix': 'Table showing correct/incorrect predictions for each class (e.g., [[TN, FP], [FN, TP]]).',
+    'labels': 'The unique class labels found in the target variable.',
+    'coef': 'Coefficients (Weights): How much each input feature influences the prediction. Larger absolute values mean stronger influence.',
+    'intercept': 'Intercept (Bias): The baseline prediction value when all input features are zero.'
+} %}
+
+{% block styles %}
+<style>
+    /* Animation and transition styles */
+    .animate-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+    
+    .animate-in.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    
+    /* Card styling */
+    .card {
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    }
+    
+    .metric-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        margin-bottom: 0.5rem;
+        background-color: #f0f7ff;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        transition: background-color 0.3s ease;
+    }
+    
+    .metric-badge:hover {
+        background-color: #e0f0ff;
+    }
+    
+    .metric-value {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .metric-explanation-icon {
+        font-size: 0.8em;
+        color: #6c757d;
+        cursor: help; 
+    }
+    
+    /* Model type badge styling */
+    .model-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.75em;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .perceptron { background-color: #e3f2fd; color: #0d47a1; }
+    .linear-regression { background-color: #e8f5e9; color: #1b5e20; }
+    .logistic-regression { background-color: #fff3e0; color: #e65100; }
+    .neural-network { background-color: #f3e5f5; color: #4a148c; }
+
+    /* Prediction form */
+    #featureInputs .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    #featureInputs .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    #newPredictionBtn {
+        transition: all 0.2s;
+    }
+    
+    #newPredictionBtn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 animate-in delay-1 show">
+        <div>
+            <h1 class="display-5 mb-1">{{ model.name }}</h1>
+            <p class="text-muted">
+                <i class="far fa-calendar-alt me-1"></i> Created {{ model.created_at.strftime('%B %d, %Y') }}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('models.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Models
+            </a>
+            <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="fas fa-trash me-1"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Model Details Card -->
+        <div class="col-md-6 animate-in delay-2 show">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Details
+                        </h4>
+                        <span class="model-type-badge {{ model.model_type|replace('_', '-') }}">
+                            {{ model.model_type|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Created: {{ model.created_at.strftime('%b %d, %Y, %I:%M %p') }}
+                    </p>
+                    
+                    <p>
+                        <strong>Dataset:</strong>
+                        <a href="{{ url_for('datasets.view', dataset_id=model.dataset_id) }}">
+                            {{ dataset.name if dataset else 'Unknown' }}
+                        </a>
+                    </p>
+                    
+                    {% if model.description %}
+                    <p>
+                        <strong>Description:</strong>
+                        {{ model.description }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <h6>Hyperparameters</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for key, value in model.hyperparameters.items() %}
+                            <li class="list-group-item px-0 py-2 border-top-0 border-start-0 border-end-0">
+                                <span class="fw-medium">{{ key|replace('_', ' ')|title }}:</span> 
+                                <span class="text-muted">{{ value }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics Card -->
+        <div class="col-md-6 animate-in delay-3 show">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Performance Metrics
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if metrics %}
+                        <div class="d-flex flex-wrap align-items-start">
+                            {% for key, value in metrics.items() %}
+                                <div class="metric-badge me-2 mb-2">
+                                    <span>
+                                        {{ key|replace('_', ' ')|title }}
+                                        {% if key in metric_explanations %}
+                                            <i class="fas fa-info-circle metric-explanation-icon ms-1"
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top" 
+                                               title="{{ metric_explanations[key] }}"></i>
+                                        {% endif %}:
+                                    </span>
+                                    {% if value is number %}
+                                        <span class="metric-value ms-1">{{ value|round(4) }}</span>
+                                    {% elif value is iterable and value is not string %}
+                                        {# Handle lists like confusion matrix or coefficients #}
+                                        {% if key == 'confusion_matrix' and value|length == 2 and value[0] is iterable and value[0]|length == 2 %}
+                                            {# Special display for 2x2 confusion matrix #}
+                                            <table class="table table-sm table-bordered d-inline-block w-auto ms-1 mt-1 small">
+                                                <tr><td>TN: {{ value[0][0] }}</td><td>FP: {{ value[0][1] }}</td></tr>
+                                                <tr><td>FN: {{ value[1][0] }}</td><td>TP: {{ value[1][1] }}</td></tr>
+                                            </table>
+                                        {% else %}
+                                            <span class="metric-value ms-1">[{{ value|map('round', 4)|join(', ') }}]</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {# Display other types as is #}
+                                        <span class="metric-value ms-1">{{ value }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light">
+                            <i class="fas fa-info-circle me-2"></i>No metrics available
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Importance Chart (Linear Regression Only) -->
+        {% if model.model_type == 'linear_regression' and metrics and 'coef' in metrics %}
+        <div class="col-12 animate-in delay-3 show">
+             <div class="card shadow-sm border-0">
+                 <div class="card-header bg-white">
+                     <h4 class="card-title mb-0">
+                         <i class="fas fa-chart-bar me-2"></i>Feature Importance (Coefficient Magnitude)
+                     </h4>
+                 </div>
+                 <div class="card-body">
+                     <canvas id="featureImportanceChart" 
+                             data-features='{{ features | tojson | safe }}' 
+                             data-coefficients='{{ metrics.coef | tojson | safe }}'
+                             style="min-height: 300px;">
+                     </canvas>
+                 </div>
+             </div>
+         </div>
+        {% endif %}
+
+        <!-- Prediction Card -->
+        <div class="col-12 animate-in delay-4 show">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Make a Prediction
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="prediction-form-container">
+                        <form id="predictionForm" action="{{ url_for('models.predict', model_id=model.id) }}" method="POST">
+                            <div id="featureInputs" class="row">
+                                {% for feature in features %}
+                                    {% set range_data = feature_ranges.get(feature) %}
+                                    {% set loop_index = loop.index0 %} {# Store index for use outside loop scope in JS #}
+                                    <div class="col-md-6 col-lg-4 mb-3 feature-input-container">
+                                        <label for="feature_slider_{{ loop.index0 }}" class="form-label">{{ feature }}</label>
+                                        {% if range_data %}
+                                            <input type="range" class="form-range prediction-slider"
+                                                   id="feature_slider_{{ loop.index0 }}" 
+                                                   name="feature_{{ loop.index0 }}" 
+                                                   min="{{ range_data.min }}" 
+                                                   max="{{ range_data.max }}" 
+                                                   step="{{ range_data.step }}" 
+                                                   value="{{ range_data.value }}">
+                                            <span class="slider-value ms-2 fw-bold">{{ range_data.value|round(2) }}</span>
+                                        {% else %}
+                                             {# Fallback for non-numeric features or if range calculation failed #}
+                                            <input type="text" class="form-control" 
+                                                   id="feature_input_{{ loop.index0 }}" 
+                                                   name="feature_{{ loop.index0 }}" 
+                                                   placeholder="Enter value for {{ feature }}"
+                                                   required>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                
+                                <div class="col-12 mt-3">
+                                </div>
+                            </div>
+                            
+                            <!-- Real-time Prediction Display -->
+                            <div id="realTimePrediction" class="mt-4 alert alert-secondary d-none"> 
+                                <h5 class="alert-heading mb-2">Prediction</h5>
+                                <div id="realTimePredictionValue">Calculating...</div>
+                                <div id="predictionExplanation" class="mt-2 small text-muted"></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete the model <strong>{{ model.name }}</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('models.delete', model_id=model.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+
+        const predictionForm = document.getElementById('predictionForm');
+        const featureInputs = document.getElementById('featureInputs');
+        
+        // Animation handler
+        const animateElements = document.querySelectorAll('.animate-in');
+        setTimeout(() => {
+            animateElements.forEach(element => {
+                element.classList.add('show');
+            });
+        }, 100);
+        
+        // Slider value display updates
+        const sliders = document.querySelectorAll('.prediction-slider');
+        const featureInputContainers = document.querySelectorAll('.feature-input-container');
+        const realTimePredictionDiv = document.getElementById('realTimePrediction');
+        const realTimePredictionValue = document.getElementById('realTimePredictionValue');
+        const predictionExplanationDiv = document.getElementById('predictionExplanation');
+        const modelType = '{{ model.model_type }}'; // Get model type for explanation logic
+        const featureNames = {{ features | tojson | safe }}; // Get feature names for explanation
+
+        let debounceTimer;
+
+        // --- Debounce function ---
+        function debounce(func, delay) {
+            return function(...args) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        // --- Function to update real-time prediction ---
+        function updateRealTimePrediction() {
+             realTimePredictionDiv.classList.remove('d-none'); // Show the prediction area
+             realTimePredictionValue.textContent = 'Calculating...'; // Show loading state
+             predictionExplanationDiv.innerHTML = ''; // Clear old explanation
+             
+             const currentFeatures = [];
+             featureInputContainers.forEach((container, index) => {
+                const input = container.querySelector('input[type="range"], input[type="text"]');
+                if (input) {
+                    currentFeatures.push(parseFloat(input.value) || 0); // Use 0 if parsing fails
+                }
+             });
+
+             // Fetch prediction from the new endpoint
+             fetch(`{{ url_for('models.predict_realtime', model_id=model.id) }}`, {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json'
+                 },
+                 body: JSON.stringify({ features: currentFeatures })
+             })
+             .then(response => response.json())
+             .then(data => {
+                 let explanationHtml = ''; // Clear previous explanation details by default
+                 if (data.error) {
+                     realTimePredictionValue.innerHTML = `<span class="text-danger"><strong>Error:</strong> ${data.error}</span>`;
+                     realTimePredictionDiv.classList.replace('alert-secondary', 'alert-danger');
+                 } else {
+                     let predictionResult = data.prediction;
+                     let predictionDisplay = '';
+                     let explanationDetail = ''; // For linear regression details
+                     
+                     // Format prediction based on model type
+                     if (modelType === 'linear_regression' || modelType === 'other_regression_type') { // Add other regression types if any
+                         const roundedPrediction = Math.round(predictionResult);
+                         predictionDisplay = `The model estimates the value to be approximately <strong>${roundedPrediction}</strong>.`;
+
+                         // Specific explanation for Linear Regression
+                         if (data.explanation) {
+                             const intercept = data.explanation.intercept.toFixed(2); // Keep some precision here
+                             explanationDetail = `<small class="text-muted">Based on a starting value of ${intercept} and adjustments from inputs.</small>`;
+                         } else {
+                             explanationDetail = `<small class="text-muted">Based on the input feature values.</small>`;
+                         }
+
+                     } else if (modelType === 'perceptron' || modelType === 'logistic_regression') { // Classification types
+                         // Assuming predictionResult is the class label (e.g., 0, 1, 'Positive', 'Negative')
+                         predictionDisplay = `The model predicts the outcome is: <strong>${predictionResult}</strong>.`;
+                         explanationDetail = `<small class="text-muted">Based on the input feature values.</small>`;
+                     } else { // Default fallback
+                         predictionDisplay = `Predicted value: <strong>${predictionResult}</strong>.`;
+                     }
+                     
+                     // Update the display
+                     realTimePredictionValue.innerHTML = predictionDisplay + `<br>` + explanationDetail;
+                     realTimePredictionDiv.classList.replace('alert-danger', 'alert-secondary');
+                     // Add standard explanation for all models
+                     if (modelType === 'linear_regression' || modelType === 'other_regression_type') { // Regression explanation
+                         predictionExplanationDiv.innerHTML = "This predicted <strong>house price</strong> is based on the training dataset you uploaded. It reflects the model's <strong>estimated market value</strong> for a house with your selected inputs (like area, bedrooms, etc.), based on patterns it learned from similar <strong>house sales</strong> in the dataset.";
+                     } else { // General explanation for other types (classification)
+                         predictionExplanationDiv.innerHTML = "This predicted outcome is based on the training dataset you uploaded. It reflects the model's classification for your selected inputs, based on patterns it learned from similar examples in the dataset.";
+                     }
+                 }
+             })
+             .catch(error => {
+                 console.error('Real-time prediction fetch error:', error);
+                 realTimePredictionValue.innerHTML = '<span class="text-danger"><strong>Error:</strong> Could not fetch prediction.</span>';
+                 realTimePredictionDiv.classList.replace('alert-secondary', 'alert-danger');
+             });
+        }
+
+        const debouncedUpdatePrediction = debounce(updateRealTimePrediction, 300); // Debounce by 300ms
+
+        sliders.forEach(slider => {
+            const valueSpan = slider.nextElementSibling; 
+            if (valueSpan && valueSpan.classList.contains('slider-value')) {
+                // Initial display
+                valueSpan.textContent = Math.round(parseFloat(slider.value)); // Display as whole number
+                // Update display on slider input
+                slider.addEventListener('input', function() {
+                    valueSpan.textContent = Math.round(parseFloat(this.value)); // Update display as whole number
+                    debouncedUpdatePrediction(); // Call debounced update on slider input
+                });
+            }
+        });
+
+        // Feature Importance Chart Logic
+        const featureImportanceCanvas = document.getElementById('featureImportanceChart');
+        
+        // Initial call to display prediction based on default slider values
+        if (sliders.length > 0) {
+            updateRealTimePrediction();
+        }
+
+        if (featureImportanceCanvas) {
+             const featuresChart = JSON.parse('{{ features | tojson | safe }}'); // Renamed to avoid conflict
+             let coefficients = null;
+             {% if metrics and 'coef' in metrics and metrics.coef is not none %}
+                 coefficients = JSON.parse('{{ metrics.coef | tojson | safe }}');
+             {% endif %}
+
+            // Proceed only if we have valid features and coefficients data
+            if (Array.isArray(featuresChart) && Array.isArray(coefficients) && featuresChart.length === coefficients.length) {
+                try {
+                    // Calculate absolute values for importance
+                    const absCoefficients = coefficients.map(coef => Math.abs(parseFloat(coef) || 0));
+                    
+                    // Combine features and their abs coefficients for sorting
+                    const featureData = featuresChart.map((feature, index) => ({
+                        feature: feature,
+                        importance: absCoefficients[index]
+                    }));
+
+                    // Sort features by importance (descending)
+                    featureData.sort((a, b) => b.importance - a.importance);
+
+                    const sortedFeatures = featureData.map(item => item.feature);
+                    const sortedAbsCoefficients = featureData.map(item => item.importance);
+                    
+                    const ctx = featureImportanceCanvas.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sortedFeatures,
+                            datasets: [{
+                                label: ' Coefficient Magnitude',
+                                data: sortedAbsCoefficients,
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Horizontal bar chart
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Magnitude (Absolute Value of Coefficient)'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Feature'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.x !== null) {
+                                                label += context.parsed.x.toFixed(4);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                     console.error("Error processing chart data:", error);
+                     // Optionally hide the chart or show an error message on the canvas
+                }
+            } else {
+                 console.log("Feature importance chart not rendered: Missing or invalid data.");
+                 // Optionally hide the chart canvas if data is bad
+                 // featureImportanceCanvas.style.display = 'none'; 
+            }
+        }
+    });
+</script>
+{% endblock %} 

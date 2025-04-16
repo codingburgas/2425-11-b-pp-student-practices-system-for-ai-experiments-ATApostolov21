@@ -1,51 +1,42 @@
 import os
 from app import create_app, db
-from app.models.user import User, Role
-from app.models.dataset import Dataset
-from app.models.ai_model import AIModel
-from app.models.comment import Comment
-from werkzeug.security import generate_password_hash
-import datetime
+from app.models import User
+from app.models.user import Role
 
 def init_db():
-    """Initialize database with some sample data"""
+    # Create the application
     app = create_app('development')
     
+    # Push an application context
     with app.app_context():
-        # Create tables
+        # Create all tables
         db.create_all()
         
-        # Check if we already have users
-        if User.query.count() > 0:
-            print("Database already initialized. Exiting.")
-            return
+        # Create test users if they don't exist
+        if User.query.filter_by(email='teacher@example.com').first() is None:
+            teacher = User(
+                username='teacher',
+                email='teacher@example.com',
+                name='Test Teacher',
+                role=Role.TEACHER
+            )
+            teacher.set_password('password')
+            db.session.add(teacher)
         
-        # Create a teacher user
-        teacher = User(
-            username='teacher',
-            email='teacher@example.com',
-            name='Teacher User',
-            role=Role.TEACHER
-        )
-        teacher.password_hash = generate_password_hash('teacher123')
+        if User.query.filter_by(email='student@example.com').first() is None:
+            student = User(
+                username='student',
+                email='student@example.com',
+                name='Test Student',
+                role=Role.STUDENT
+            )
+            student.set_password('password')
+            db.session.add(student)
         
-        # Create a student user
-        student = User(
-            username='student',
-            email='student@example.com',
-            name='Student User',
-            role=Role.STUDENT
-        )
-        student.password_hash = generate_password_hash('student123')
-        
-        # Add users to the database
-        db.session.add(teacher)
-        db.session.add(student)
+        # Commit changes
         db.session.commit()
         
-        print("Database initialized with sample users:")
-        print("Teacher account: teacher@example.com / teacher123")
-        print("Student account: student@example.com / student123")
+        print("Database initialized with test users.")
 
 if __name__ == '__main__':
     init_db() 

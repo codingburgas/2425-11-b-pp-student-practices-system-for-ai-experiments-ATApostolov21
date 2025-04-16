@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Dataset{% endblock %}
+
+{% block content %}
+<div class="container py-4 fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h2 class="card-title display-6 fw-bold mb-0">Upload Dataset</h2>
+                    <p class="text-muted mt-2">Upload a CSV file to use for training AI models</p>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm" novalidate>
+                        <div class="mb-4">
+                            <label for="name" class="form-label fw-semibold">Dataset Name*</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Enter a descriptive name" required>
+                            <div class="invalid-feedback">Please provide a name for your dataset.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-semibold">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide details about this dataset"></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Dataset File*</label>
+                            <div class="dropzone-container border rounded p-4 text-center" id="fileDropzone">
+                                <input type="file" name="file" id="fileInput" class="d-none" accept=".csv" required>
+                                <div class="dropzone-message">
+                                    <i class="bi bi-cloud-upload display-4 mb-3 text-primary"></i>
+                                    <h5>Drop your CSV file here</h5>
+                                    <p class="text-muted">or</p>
+                                    <button type="button" class="btn btn-outline-primary btn-lg px-4" id="browseButton">
+                                        Browse Files
+                                    </button>
+                                    <p class="mt-3 text-muted small">Only CSV files are supported</p>
+                                </div>
+                                <div class="dropzone-preview d-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-spreadsheet text-success fs-1 me-3"></i>
+                                        <div class="flex-grow-1">
+                                            <h5 class="file-name mb-1"></h5>
+                                            <div class="file-size text-muted small"></div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileButton">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="invalid-feedback">Please select a CSV file.</div>
+                        </div>
+                        
+                        <div class="border-top pt-4 mt-4">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('datasets.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to Datasets
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4 submit-btn">
+                                    <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                                    <i class="bi bi-cloud-upload me-2 submit-icon"></i>Upload Dataset
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const fileDropzone = document.getElementById('fileDropzone');
+        const browseButton = document.getElementById('browseButton');
+        const removeFileButton = document.getElementById('removeFileButton');
+        const dropzoneMessage = document.querySelector('.dropzone-message');
+        const dropzonePreview = document.querySelector('.dropzone-preview');
+        const fileName = document.querySelector('.file-name');
+        const fileSize = document.querySelector('.file-size');
+        const submitBtn = document.querySelector('.submit-btn');
+        const submitIcon = document.querySelector('.submit-icon');
+        const spinner = document.querySelector('.spinner-border');
+        
+        // Handle file browse button
+        browseButton.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            handleFileSelection(this.files[0]);
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropzone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropzone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropzone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            fileDropzone.classList.add('border-primary');
+        }
+        
+        function unhighlight() {
+            fileDropzone.classList.remove('border-primary');
+        }
+        
+        fileDropzone.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            
+            if (file && file.name.endsWith('.csv')) {
+                fileInput.files = dt.files;
+                handleFileSelection(file);
+            } else {
+                showInvalidFileType();
+            }
+        });
+        
+        // Handle remove file button
+        removeFileButton.addEventListener('click', function() {
+            fileInput.value = '';
+            dropzoneMessage.classList.remove('d-none');
+            dropzonePreview.classList.add('d-none');
+            fileDropzone.classList.remove('has-file');
+        });
+        
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                // Show loading state
+                submitBtn.disabled = true;
+                submitIcon.classList.add('d-none');
+                spinner.classList.remove('d-none');
+            }
+            
+            form.classList.add('was-validated');
+        });
+        
+        function handleFileSelection(file) {
+            if (file && file.name.endsWith('.csv')) {
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                
+                dropzoneMessage.classList.add('d-none');
+                dropzonePreview.classList.remove('d-none');
+                fileDropzone.classList.add('has-file');
+            } else if (file) {
+                showInvalidFileType();
+            }
+        }
+        
+        function showInvalidFileType() {
+            alert('Please select a valid CSV file.');
+            fileInput.value = '';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    });
+</script>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.6s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .dropzone-container {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .dropzone-container:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .dropzone-container.border-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd !important;
+    }
+    
+    .dropzone-container.has-file {
+        background-color: rgba(25, 135, 84, 0.05);
+        border-color: #198754 !important;
+    }
+    
+    .file-name {
+        word-break: break-all;
+    }
+    
+    .submit-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %} 

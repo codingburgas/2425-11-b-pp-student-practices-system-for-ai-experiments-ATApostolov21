@@ -5,6 +5,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, mean_squared_error, confusion_matrix
 from sklearn.linear_model import LinearRegression, LogisticRegression, Perceptron
 from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from app.models.ai_model import ModelType
 
 def train_model(df, model_type, target_column, hyperparameters=None):
@@ -46,6 +50,9 @@ def train_model(df, model_type, target_column, hyperparameters=None):
         'features': df.drop(columns=[target_column]).columns.tolist(),
         'classes': np.unique(y).tolist() if model_type != ModelType.LINEAR_REGRESSION else []
     }
+    
+    # Determine if regression or classification based on target data
+    is_regression = np.unique(y).size > 10 or np.issubdtype(y.dtype, np.number) and not np.array_equal(y, y.astype(int))
     
     # Train the model based on type
     if model_type == ModelType.LINEAR_REGRESSION:
@@ -108,8 +115,7 @@ def train_model(df, model_type, target_column, hyperparameters=None):
             except:
                 pass
         
-        # Determine if regression or classification based on target data
-        if np.unique(y).size > 10 or np.issubdtype(y.dtype, np.number) and not np.array_equal(y, y.astype(int)):
+        if is_regression:
             # Regression
             model = MLPRegressor(
                 hidden_layer_sizes=hidden_layer_sizes,
@@ -145,6 +151,180 @@ def train_model(df, model_type, target_column, hyperparameters=None):
                 'confusion_matrix': conf_matrix,
                 'train_loss': model.loss_curve_,
                 'val_loss': []  # sklearn doesn't provide validation loss
+            })
+    
+    elif model_type == ModelType.DECISION_TREE:
+        # Get hyperparameters
+        max_depth = hyperparameters.get('max_depth', 10)
+        min_samples_split = hyperparameters.get('min_samples_split', 2)
+        
+        if is_regression:
+            # Regression tree
+            model = DecisionTreeRegressor(
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+                random_state=42
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = model.score(X_test, y_test)
+            
+            metrics.update({
+                'loss': mse,
+                'r2': r2,
+                'feature_importance': model.feature_importances_.tolist(),
+                'train_loss': [],
+                'val_loss': []
+            })
+        else:
+            # Classification tree
+            model = DecisionTreeClassifier(
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+                random_state=42
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            conf_matrix = confusion_matrix(y_test, y_pred).tolist()
+            
+            metrics.update({
+                'accuracy': accuracy,
+                'loss': -accuracy,
+                'confusion_matrix': conf_matrix,
+                'feature_importance': model.feature_importances_.tolist(),
+                'train_loss': [],
+                'val_loss': []
+            })
+    
+    elif model_type == ModelType.RANDOM_FOREST:
+        # Get hyperparameters
+        n_estimators = hyperparameters.get('n_estimators', 100)
+        max_depth = hyperparameters.get('max_depth', 10)
+        
+        if is_regression:
+            # Random Forest Regression
+            model = RandomForestRegressor(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                random_state=42
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = model.score(X_test, y_test)
+            
+            metrics.update({
+                'loss': mse,
+                'r2': r2,
+                'feature_importance': model.feature_importances_.tolist(),
+                'train_loss': [],
+                'val_loss': []
+            })
+        else:
+            # Random Forest Classification
+            model = RandomForestClassifier(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                random_state=42
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            conf_matrix = confusion_matrix(y_test, y_pred).tolist()
+            
+            metrics.update({
+                'accuracy': accuracy,
+                'loss': -accuracy,
+                'confusion_matrix': conf_matrix,
+                'feature_importance': model.feature_importances_.tolist(),
+                'train_loss': [],
+                'val_loss': []
+            })
+    
+    elif model_type == ModelType.SVM:
+        # Get hyperparameters
+        C = hyperparameters.get('C', 1.0)
+        kernel = hyperparameters.get('kernel', 'rbf')
+        
+        if is_regression:
+            # SVM Regression
+            model = SVR(
+                C=C,
+                kernel=kernel
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = model.score(X_test, y_test)
+            
+            metrics.update({
+                'loss': mse,
+                'r2': r2,
+                'train_loss': [],
+                'val_loss': []
+            })
+        else:
+            # SVM Classification
+            model = SVC(
+                C=C,
+                kernel=kernel,
+                probability=True,
+                random_state=42
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            conf_matrix = confusion_matrix(y_test, y_pred).tolist()
+            
+            metrics.update({
+                'accuracy': accuracy,
+                'loss': -accuracy,
+                'confusion_matrix': conf_matrix,
+                'train_loss': [],
+                'val_loss': []
+            })
+    
+    elif model_type == ModelType.KNN:
+        # Get hyperparameters
+        n_neighbors = hyperparameters.get('n_neighbors', 5)
+        weights = hyperparameters.get('weights', 'uniform')
+        
+        if is_regression:
+            # KNN Regression
+            model = KNeighborsRegressor(
+                n_neighbors=n_neighbors,
+                weights=weights
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = model.score(X_test, y_test)
+            
+            metrics.update({
+                'loss': mse,
+                'r2': r2,
+                'train_loss': [],
+                'val_loss': []
+            })
+        else:
+            # KNN Classification
+            model = KNeighborsClassifier(
+                n_neighbors=n_neighbors,
+                weights=weights
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            conf_matrix = confusion_matrix(y_test, y_pred).tolist()
+            
+            metrics.update({
+                'accuracy': accuracy,
+                'loss': -accuracy,
+                'confusion_matrix': conf_matrix,
+                'train_loss': [],
+                'val_loss': []
             })
     
     # Add scaler to the model object for later use during prediction

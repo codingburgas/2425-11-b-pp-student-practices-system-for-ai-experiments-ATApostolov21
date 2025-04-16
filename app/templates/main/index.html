@@ -1,63 +1,118 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}AI Experiments System - Home{% endblock %}
+{% block title %}AI Experiment System - Home{% endblock %}
 
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4">System for Experiments with Artificial Intelligence</h1>
-    <p class="lead">
-        A web-based system where students and teachers can create, train, and test simple AI models
-        while practicing database work, result visualization, and using basic algorithms.
-    </p>
-    <hr class="my-4">
-    <p>
-        This platform allows you to:
-    </p>
-    <ul>
-        <li>Upload datasets and train various AI models on them</li>
-        <li>Visualize training results and model performance</li>
-        <li>Make predictions with your trained models</li>
-        <li>Share and discuss results with other students and teachers</li>
-    </ul>
-    <p class="lead">
-        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">Get Started</a>
-        <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('main.about') }}" role="button">Learn More</a>
-    </p>
-</div>
 
-<div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Simple AI Models</h5>
-                <p class="card-text">
-                    Train and experiment with various algorithms including perceptron, 
-                    linear regression, logistic regression, and neural networks.
-                </p>
+<section class="hero py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-4 fw-bold mb-3">Experiment with AI Models</h1>
+                <p class="lead mb-4">A powerful platform for students and teachers to train, evaluate, and collaborate on machine learning models.</p>
+                {% if not current_user.is_authenticated %}
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg">Log In</a>
+                </div>
+                {% else %}
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('datasets.index') }}" class="btn btn-primary btn-lg">View Datasets</a>
+                    <a href="{{ url_for('models.index') }}" class="btn btn-outline-secondary btn-lg">Manage Models</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1488229297570-58520851e868?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80" alt="AI Data Visualization" class="img-fluid rounded shadow">
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Data Visualization</h5>
-                <p class="card-text">
-                    Visualize your training results with interactive graphs
-                    showing decision boundaries, regression lines, and more.
-                </p>
+</section>
+
+<section class="features py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-table fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Dataset Management</h3>
+                        <p class="card-text">Upload, manage, and analyze datasets for your machine learning experiments.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-project-diagram fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Multiple Model Types</h3>
+                        <p class="card-text">Train and experiment with Perceptrons, Linear Regression, Logistic Regression, and Neural Networks.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-chart-bar fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Performance Metrics</h3>
+                        <p class="card-text">Evaluate model performance with accuracy, mean squared error, and other relevant metrics.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-brain fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Hyperparameter Tuning</h3>
+                        <p class="card-text">Customize model parameters to optimize performance for your specific use case.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-comments fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Collaborative Learning</h3>
+                        <p class="card-text">Comment on models, share insights, and learn from peers in a collaborative environment.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3 bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                            <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                        </div>
+                        <h3 class="card-title h5">Secure Cloud Storage</h3>
+                        <p class="card-text">All datasets and models are securely stored in Supabase for reliable access anywhere.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Collaborative Learning</h5>
-                <p class="card-text">
-                    Share your trained models with teachers and peers,
-                    receive feedback, and learn from others' experiments.
-                </p>
-            </div>
-        </div>
+</section>
+
+<section class="cta py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to start experimenting?</h2>
+        <p class="lead mb-4">Join our platform and gain hands-on experience with machine learning models.</p>
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">Create an Account</a>
+        {% else %}
+        <a href="{{ url_for('models.index') }}" class="btn btn-light btn-lg">Go to Models</a>
+        {% endif %}
     </div>
-</div>
+</section>
+
 {% endblock %} 

@@ -1,34 +1,46 @@
 from flask import Blueprint, render_template, redirect, url_for
-from flask_login import login_required, current_user
-from app.models.ai_model import AIModel
 from app.models.dataset import Dataset
-from app import db
+from app.models.model import Model
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.dashboard'))
-    return render_template('main/index.html')
+    """Landing page route"""
+    return render_template('index.html')
 
 @main.route('/dashboard')
-@login_required
 def dashboard():
-    # If user is a teacher, show all models and datasets
-    if current_user.is_teacher():
-        datasets = Dataset.query.order_by(Dataset.created_at.desc()).limit(5).all()
-        models = AIModel.query.order_by(AIModel.created_at.desc()).limit(5).all()
-    else:
-        # For students, only show their own data
-        datasets = Dataset.query.filter_by(user_id=current_user.id)\
-            .order_by(Dataset.created_at.desc()).limit(5).all()
-        models = AIModel.query.filter_by(user_id=current_user.id)\
-            .order_by(AIModel.created_at.desc()).limit(5).all()
+    """Dashboard route showing system overview"""
+    # Get counts for stats
+    datasets_count = len(Dataset.get_all())
+    models_count = len(Model.get_all())
     
-    return render_template('main/dashboard.html', 
-                           datasets=datasets, 
-                           models=models)
+    # Sample learning resources
+    learning_resources = [
+        {
+            'title': 'Introduction to Machine Learning',
+            'url': 'https://www.coursera.org/learn/machine-learning',
+            'source': 'Coursera'
+        },
+        {
+            'title': 'Neural Networks and Deep Learning',
+            'url': 'https://www.deeplearning.ai/',
+            'source': 'deeplearning.ai'
+        },
+        {
+            'title': 'Scikit-Learn Documentation',
+            'url': 'https://scikit-learn.org/stable/documentation.html',
+            'source': 'Scikit-Learn'
+        }
+    ]
+    
+    return render_template(
+        'dashboard.html',
+        datasets_count=datasets_count,
+        models_count=models_count,
+        learning_resources=learning_resources
+    )
 
 @main.route('/about')
 def about():

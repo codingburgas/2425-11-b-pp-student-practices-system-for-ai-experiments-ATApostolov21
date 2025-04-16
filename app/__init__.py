@@ -1,45 +1,36 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_login import LoginManager
-from flask_bootstrap import Bootstrap4
+from flask_bootstrap import Bootstrap
 from config import config
-import os
+import datetime
 
-db = SQLAlchemy()
-migrate = Migrate()
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.login_message_category = 'info'
-bootstrap = Bootstrap4()
+bootstrap = Bootstrap()
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
-    
-    # Create upload folder if it doesn't exist
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    config[config_name].init_app(app)
     
     # Initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
     bootstrap.init_app(app)
+    
+    # Add template context processor to make bootstrap available in templates
+    @app.context_processor
+    def inject_bootstrap():
+        return dict(bootstrap=bootstrap)
+    
+    # Add template context processor to provide datetime
+    @app.context_processor
+    def inject_now():
+        return {'current_year': datetime.datetime.now().year}
     
     # Register blueprints
     from app.routes.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
     
-    from app.routes.auth import auth as auth_blueprint
-    app.register_blueprint(auth_blueprint, url_prefix='/auth')
-    
     from app.routes.models import models as models_blueprint
     app.register_blueprint(models_blueprint, url_prefix='/models')
     
-    from app.routes.datasets import datasets as datasets_blueprint
+    from app.routes.datasets import datasets_bp as datasets_blueprint
     app.register_blueprint(datasets_blueprint, url_prefix='/datasets')
-    
-    from app.routes.visualizations import visualizations as visualizations_blueprint
-    app.register_blueprint(visualizations_blueprint, url_prefix='/visualizations')
     
     return app 

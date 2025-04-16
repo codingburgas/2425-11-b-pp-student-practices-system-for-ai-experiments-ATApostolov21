@@ -1,122 +1,148 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
-import os
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify
 import pandas as pd
-import json
-from app.forms.dataset import DatasetForm
+import io
+import os
+from werkzeug.utils import secure_filename
+import tempfile
 from app.models.dataset import Dataset
-from app import db
 
-datasets = Blueprint('datasets', __name__)
+datasets_bp = Blueprint('datasets', __name__)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'csv'}
-
-@datasets.route('/')
-@login_required
+@datasets_bp.route('/')
 def index():
-    # For teachers, show all datasets; for students, only show their own
-    if current_user.is_teacher():
-        datasets_list = Dataset.query.order_by(Dataset.created_at.desc()).all()
-    else:
-        datasets_list = Dataset.query.filter_by(user_id=current_user.id)\
-            .order_by(Dataset.created_at.desc()).all()
-    
-    return render_template('datasets/index.html', datasets=datasets_list)
+    # Get all datasets
+    datasets = Dataset.get_all()
+    return render_template('datasets/index.html', datasets=datasets)
 
-@datasets.route('/create', methods=['GET', 'POST'])
-@login_required
-def create():
-    form = DatasetForm()
+@datasets_bp.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        
+        # If user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+        
+        if file:
+            # Ensure filename is secure
+            filename = secure_filename(file.filename)
+            
+            # Check if file is CSV
+            if not filename.endswith('.csv'):
+                flash('File must be a CSV', 'danger')
+                return redirect(request.url)
+            
+            # Try to read the CSV to ensure it's valid
+            try:
+                # Create dataset in database
+                description = request.form.get('description', '')
+                name = request.form.get('name') or filename.rsplit('.', 1)[0]  # Use form name or filename
+                
+                result = Dataset.create(
+                    name=name,
+                    description=description,
+                    file=file
+                )
+                
+                if isinstance(result, Dataset):
+                    flash('Dataset uploaded successfully!', 'success')
+                    return redirect(url_for('datasets.view', dataset_id=result.id))
+                else:
+                    flash(f'Failed to upload dataset: {result.get("error", "Unknown error")}', 'danger')
+                    return redirect(request.url)
+            
+            except Exception as e:
+                flash(f'Error processing CSV: {str(e)}', 'danger')
+                return redirect(request.url)
     
-    if form.validate_on_submit():
-        if not form.file.data:
-            flash('No file selected!', 'danger')
-            return render_template('datasets/create.html', form=form)
-        
-        file = form.file.data
-        if not allowed_file(file.filename):
-            flash('Only CSV files are allowed!', 'danger')
-            return render_template('datasets/create.html', form=form)
-        
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        # Read the file to get metadata
-        try:
-            df = pd.read_csv(file_path)
-            columns = df.columns.tolist()
-            
-            dataset = Dataset(
-                name=form.name.data,
-                description=form.description.data,
-                filename=filename,
-                feature_columns=json.dumps(columns),
-                row_count=len(df),
-                column_count=len(columns),
-                user_id=current_user.id
-            )
-            
-            db.session.add(dataset)
-            db.session.commit()
-            
-            flash('Dataset successfully uploaded!', 'success')
-            return redirect(url_for('datasets.view', id=dataset.id))
-            
-        except Exception as e:
-            flash(f'Error processing file: {str(e)}', 'danger')
-            return render_template('datasets/create.html', form=form)
-    
-    return render_template('datasets/create.html', form=form)
+    return render_template('datasets/upload.html')
 
-@datasets.route('/<int:id>')
-@login_required
-def view(id):
-    dataset = Dataset.query.get_or_404(id)
+@datasets_bp.route('/<dataset_id>')
+def view(dataset_id):
+    dataset = Dataset.get_by_id(dataset_id)
     
-    # Check permissions: students can only view their own datasets
-    if not current_user.is_teacher() and dataset.user_id != current_user.id:
-        flash('You do not have permission to view this dataset.', 'danger')
+    if dataset is None:
+        flash('Dataset not found', 'danger')
         return redirect(url_for('datasets.index'))
     
-    # Load dataset preview
+    # Get dataset preview (first 10 rows)
+    preview = None
     try:
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], dataset.filename)
-        df = pd.read_csv(file_path)
-        preview = df.head(10).to_html(classes=['table', 'table-striped', 'table-bordered'])
-        columns = json.loads(dataset.feature_columns)
-    except:
-        preview = "Error loading dataset preview"
-        columns = []
+        preview = dataset.get_preview(rows=10)
+        if isinstance(preview, dict) and 'error' in preview:
+            flash(f'Error previewing dataset: {preview["error"]}', 'warning')
+            preview = None
+    except Exception as e:
+        flash(f'Error previewing dataset: {str(e)}', 'warning')
+    
+    # Get dataset statistics
+    stats = dataset.get_statistics()
+    if isinstance(stats, dict) and 'error' in stats:
+        flash(f'Error getting dataset statistics: {stats["error"]}', 'warning')
+        stats = None
+    
+    # Check if dataset is used by any models
+    from app.models.model import Model
+    models = Model.get_all()
+    models_using_dataset = [m for m in models if m.dataset_id == dataset_id]
     
     return render_template('datasets/view.html', 
                           dataset=dataset, 
                           preview=preview,
-                          columns=columns)
+                          stats=stats,
+                          models=models_using_dataset)
 
-@datasets.route('/<int:id>/delete', methods=['POST'])
-@login_required
-def delete(id):
-    dataset = Dataset.query.get_or_404(id)
+@datasets_bp.route('/<dataset_id>/download')
+def download(dataset_id):
+    dataset = Dataset.get_by_id(dataset_id)
     
-    # Check permissions: only owner or teacher can delete
-    if not current_user.is_teacher() and dataset.user_id != current_user.id:
-        flash('You do not have permission to delete this dataset.', 'danger')
+    if dataset is None:
+        flash('Dataset not found', 'danger')
         return redirect(url_for('datasets.index'))
     
-    # Delete the file if it exists
     try:
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], dataset.filename)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    except:
-        flash('Could not delete dataset file.', 'warning')
+        # Get file path for download
+        file_path = dataset.download_file()
+        if file_path:
+            return send_file(file_path, 
+                         mimetype='text/csv',
+                         as_attachment=True,
+                         download_name=f"{dataset.name}.csv")
+        else:
+            flash('Error downloading dataset', 'danger')
+            return redirect(url_for('datasets.view', dataset_id=dataset_id))
+    except Exception as e:
+        flash(f'Error downloading dataset: {str(e)}', 'danger')
+        return redirect(url_for('datasets.view', dataset_id=dataset_id))
+
+@datasets_bp.route('/<dataset_id>/delete', methods=['POST'])
+def delete(dataset_id):
+    dataset = Dataset.get_by_id(dataset_id)
     
-    # Delete from database
-    db.session.delete(dataset)
-    db.session.commit()
+    if dataset is None:
+        flash('Dataset not found', 'danger')
+        return redirect(url_for('datasets.index'))
     
-    flash('Dataset deleted successfully.', 'success')
+    # Check if dataset is used by any models
+    from app.models.model import Model
+    models = Model.get_all()
+    models_using_dataset = [m for m in models if m.dataset_id == dataset_id]
+    
+    if models_using_dataset:
+        flash('Cannot delete dataset as it is used by one or more models', 'danger')
+        return redirect(url_for('datasets.view', dataset_id=dataset_id))
+    
+    # Delete the dataset
+    if dataset.delete():
+        flash('Dataset deleted successfully', 'success')
+    else:
+        flash('Failed to delete dataset', 'danger')
+    
     return redirect(url_for('datasets.index')) 
