@@ -1,70 +1,89 @@
-# System for Experiments with Artificial Intelligence
+# AI Experiment Platform
 
-A web-based system using Flask where students and teachers can create, train, and test simple AI models while practicing database work, result visualization, and using basic algorithms.
+An educational web application for students and teachers to experiment with machine learning models. The platform allows students to upload datasets, train models, and make real-time predictions while teachers can monitor progress and provide feedback.
 
 ## Features
 
-- User authentication with different access levels (students and teachers)
-- Upload and manage datasets
-- Train various AI models (perceptron, linear regression, logistic regression, neural network)
-- Visualize training results 
-- Make predictions with trained models
-- Share and comment on results
+- User authentication (student and teacher roles)
+- Dataset upload and visualization
+- Model training with simple and multiple linear regression
+- Real-time predictions with interactive sliders
+- Feature importance visualization
+- Performance metrics and model interpretation
+- Teacher feedback system
 
-## Setup Instructions
+## Technology Stack
+
+- React for the frontend
+- React Router for navigation
+- Tailwind CSS for styling
+- Chart.js for data visualization
+- ML-Regression-Simple-Linear and ML-Matrix for machine learning algorithms
+- LocalStorage for data persistence (no backend required)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+
+### Installation
 
 1. Clone the repository
+2. Install dependencies
    ```
-   git clone https://github.com/yourusername/ai-experiments-system.git
-   cd ai-experiments-system
+   npm install
    ```
+3. Start the development server
+   ```
+   npm start
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-2. Create and activate a virtual environment
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+## Usage
 
-3. Install dependencies
-   ```
-   pip install -r requirements.txt
-   ```
+### For First-Time Users
 
-4. Set up environment variables
-   ```
-   cp .env.example .env
-   # Edit .env file with your configuration
-   ```
+1. Register a teacher account first
+2. Then register student accounts (students need to select a teacher during registration)
+3. Use the sample datasets in the `public` folder for initial testing:
+   - `sample-housing.csv` - A comprehensive housing dataset with 6 features
 
-5. Initialize the database
-   ```
-   flask db init
-   flask db migrate -m "Initial migration"
-   flask db upgrade
-   ```
+### For Students
 
-6. Run the application
-   ```
-   flask run
-   ```
+1. Upload a dataset (CSV format with headers)
+2. Train a model using the uploaded dataset
+   - Select a target column (what to predict)
+   - Select 1-6 feature columns (what to use for prediction)
+   - For optimal educational value, 3-6 features are recommended
+3. Make predictions using the interactive sliders
+4. View model performance metrics, coefficients, and feature importance visualizations
 
-7. Navigate to http://127.0.0.1:5000 in your browser
+### For Teachers
 
-## Project Structure
+1. View all student models in the dashboard
+2. Provide feedback on student models
+3. Monitor student progress
 
-- `/app` - Main application package
-  - `/models` - Database models
-  - `/routes` - Route handlers
-  - `/forms` - Form definitions
-  - `/templates` - HTML templates
-  - `/static` - Static files (CSS, JS, images)
-  - `/utils` - Utility functions and AI implementations
+## Educational Value
 
-## Technologies Used
+This platform is designed with a focus on educational value:
 
-- Flask - Web framework
-- SQLAlchemy - ORM for database operations
-- Flask-Login - User session management
-- Scikit-learn - Machine learning algorithms
-- Matplotlib/Plotly - Data visualization
-- Bootstrap - Frontend styling 
+- Easily compare the impact of different features on predictions
+- Visualize feature importance and understand coefficients
+- See real-time updates as feature values change
+- Understand the mathematical representation of the model
+- Learn about key concepts like R², MSE, and coefficients
+
+## Development
+
+- The project uses React contexts for state management
+- Authentication is handled via localStorage
+- All data is stored locally in the browser (no backend required)
+- Simple linear regression is used for single-feature models
+- Multiple linear regression is implemented using the ML-Matrix library
+
+## License
+
+This project is available for educational purposes only. 

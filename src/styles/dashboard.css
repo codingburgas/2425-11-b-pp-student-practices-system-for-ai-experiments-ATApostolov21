@@ -1,0 +1,212 @@
+.dashboard-container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.section-title {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.section-title:hover::after {
+  width: 100%;
+}
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1rem 0;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-table th {
+  background-color: #f3f4f6;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #4b5563;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.dashboard-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.dashboard-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.dashboard-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dashboard-btn-primary {
+  background-color: #6366F1;
+  color: white;
+}
+
+.dashboard-btn-primary:hover {
+  background-color: #4F46E5;
+}
+
+.dashboard-btn-secondary {
+  background-color: #9CA3AF;
+  color: white;
+}
+
+.dashboard-btn-secondary:hover {
+  background-color: #6B7280;
+}
+
+.dashboard-btn-danger {
+  background-color: #EF4444;
+  color: white;
+}
+
+.dashboard-btn-danger:hover {
+  background-color: #DC2626;
+}
+
+.student-card {
+  border-radius: 12px;
+  padding: 16px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.student-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.student-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 0.5rem;
+}
+
+.metrics-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.metric-good {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+.metric-mid {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.metric-poor {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.dataset-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #E0E7FF;
+  color: #4F46E5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  margin-left: 6px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6B7280;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #9CA3AF;
+}
+
+.empty-state-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #4B5563;
+}
+
+.empty-state-description {
+  margin-bottom: 1rem;
+} 
