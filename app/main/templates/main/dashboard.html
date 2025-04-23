@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Experiment Platform{% endblock %}
+
+{% block content %}
+<div class="relative z-10">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <div class="animate-float-slow absolute top-10 left-[10%] w-72 h-72 bg-indigo-600 opacity-5 rounded-full blur-3xl"></div>
+        <div class="animate-float-delayed absolute bottom-10 right-[15%] w-80 h-80 bg-purple-600 opacity-5 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="transition-all duration-700 ease-out transform">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                {% if current_user.is_teacher() %}Teacher Dashboard{% else %}Student Dashboard{% endif %}
+            </h2>
+            
+            {% if current_user.is_student() %}
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="{{ url_for('datasets.upload') }}" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Upload Dataset
+                    </a>
+                    <a href="{{ url_for('models.train') }}" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                        </svg>
+                        Train Model
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 transition-all duration-700 ease-out transform">
+            <!-- Models Card -->
+            <div class="relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                <div class="relative bg-white rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-gray-800 font-semibold">
+                            {% if current_user.is_teacher() %}Student Models{% else %}Your Models{% endif %}
+                        </h4>
+                        <span class="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-3xl font-bold text-gray-900">{{ models|length }}</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            {% if current_user.is_teacher() %}
+                                Models created by students
+                            {% else %}
+                                Total models created
+                            {% endif %}
+                        </p>
+                    </div>
+                    <a href="#models" class="mt-4 inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                        View Details
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Datasets Card -->
+            <div class="relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                <div class="relative bg-white rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-gray-800 font-semibold">
+                            {% if current_user.is_teacher() %}Student Datasets{% else %}Your Datasets{% endif %}
+                        </h4>
+                        <span class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
+                                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
+                                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-3xl font-bold text-gray-900">{{ datasets|length }}</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            {% if current_user.is_teacher() %}
+                                Datasets uploaded by students
+                            {% else %}
+                                Total datasets uploaded
+                            {% endif %}
+                        </p>
+                    </div>
+                    <a href="#datasets" class="mt-4 inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        View Details
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Students/Teacher Card -->
+            <div class="relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                <div class="relative bg-white rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-gray-800 font-semibold">
+                            {% if current_user.is_teacher() %}Your Students{% else %}Your Teacher{% endif %}
+                        </h4>
+                        <span class="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        {% if current_user.is_teacher() %}
+                            <p class="text-3xl font-bold text-gray-900">{{ students|length }}</p>
+                            <p class="text-sm text-gray-500 mt-1">Students assigned to you</p>
+                        {% else %}
+                            <p class="text-xl font-bold text-gray-900">{{ current_user.teacher.username if current_user.teacher else 'No teacher assigned' }}</p>
+                            <p class="text-sm text-gray-500 mt-1">Your assigned teacher</p>
+                        {% endif %}
+                    </div>
+                    {% if current_user.is_teacher() and students|length > 0 %}
+                        <a href="#students" class="mt-4 inline-flex items-center text-sm text-amber-600 hover:text-amber-800 font-medium">
+                            View Students
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Models Section -->
+        <div id="models" class="mb-10">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                {% if current_user.is_teacher() %}Student Models{% else %}Your Models{% endif %}
+            </h3>
+            
+            {% if models|length == 0 %}
+                <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                    <p class="text-gray-600">
+                        {% if current_user.is_teacher() %}
+                            No student models found.
+                        {% else %}
+                            You haven't created any models yet.
+                            <a href="{{ url_for('models.train') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">Train your first model</a>.
+                        {% endif %}
+                    </p>
+                </div>
+            {% else %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for model in models %}
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                            <div class="h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                            <div class="p-6">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-2">{{ model.name }}</h4>
+                                    <span class="text-xs px-2 py-1 rounded-full
+                                        {% if model.model_type == 'linear_regression' %}bg-blue-100 text-blue-800
+                                        {% elif model.model_type == 'multiple_regression' %}bg-purple-100 text-purple-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ model.model_type|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">
+                                    {% if model.description %}
+                                        {{ model.description|truncate(100) }}
+                                    {% else %}
+                                        No description provided.
+                                    {% endif %}
+                                </p>
+                                <div class="text-xs text-gray-500 mb-4">
+                                    <p>Created: {{ model.created_at.strftime('%Y-%m-%d') }}</p>
+                                    {% if current_user.is_teacher() %}
+                                        <p>By: {{ model.owner.username }}</p>
+                                    {% endif %}
+                                    <p>Dataset: {{ model.dataset.name }}</p>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <a href="{{ url_for('models.view', model_id=model.id) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                        View Details
+                                    </a>
+                                    {% if current_user.is_teacher() %}
+                                        <a href="{{ url_for('models.feedback', model_id=model.id) }}" class="text-sm font-medium text-amber-600 hover:text-amber-800">
+                                            Leave Feedback
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Datasets Section -->
+        <div id="datasets" class="mb-10">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                {% if current_user.is_teacher() %}Student Datasets{% else %}Your Datasets{% endif %}
+            </h3>
+            
+            {% if datasets|length == 0 %}
+                <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                    <p class="text-gray-600">
+                        {% if current_user.is_teacher() %}
+                            No student datasets found.
+                        {% else %}
+                            You haven't uploaded any datasets yet.
+                            <a href="{{ url_for('datasets.upload') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">Upload your first dataset</a>.
+                        {% endif %}
+                    </p>
+                </div>
+            {% else %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    {% if current_user.is_teacher() %}
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    {% endif %}
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Models</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for dataset in datasets %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ dataset.name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-500">
+                                                {% if dataset.description %}
+                                                    {{ dataset.description|truncate(50) }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        {% if current_user.is_teacher() %}
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">{{ dataset.owner.username }}</div>
+                                            </td>
+                                        {% endif %}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-500">{{ dataset.created_at.strftime('%Y-%m-%d') }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                                {{ dataset.model_count }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="{{ url_for('datasets.view', dataset_id=dataset.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                            {% if current_user.is_student() and dataset.user_id == current_user.id %}
+                                                <a href="{{ url_for('datasets.delete', dataset_id=dataset.id) }}" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this dataset? This will also delete any models created from it.')">Delete</a>
+                                            {% endif %}
+                                            {% if current_user.is_teacher() %}
+                                                <a href="{{ url_for('datasets.delete', dataset_id=dataset.id) }}" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this student dataset? This will also delete any models created from it.')">Delete</a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Students Section (Teacher only) -->
+        {% if current_user.is_teacher() and students|length > 0 %}
+            <div id="students" class="mb-10">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">Your Students</h3>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datasets</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Models</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for student in students %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ student.username }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-500">{{ student.email }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-cyan-100 text-cyan-800">
+                                                {{ student.dataset_count }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                                {{ student.model_count }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
