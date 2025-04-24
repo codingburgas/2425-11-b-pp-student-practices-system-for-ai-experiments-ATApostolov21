@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+
+{% block title %}Make Predictions - {{ model.name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <!-- Header with title and actions -->
+    <div class="px-6 py-4 flex justify-between items-center border-b border-gray-100">
+        <div>
+            <h1 class="text-2xl font-bold text-indigo-600">{{ model.name }} - {{ model.target_column }} prediction</h1>
+            <p class="text-sm text-gray-500">{{ model.model_type | title }} Model</p>
+        </div>
+        <div class="flex space-x-2">
+            {% if current_user.id == model.user_id or current_user.is_teacher() %}
+            <button type="button" class="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200" onclick="openDeleteModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Model
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabs navigation -->
+    <div class="border-b border-gray-100">
+        <nav class="flex px-6" aria-label="Tabs">
+            <a href="{{ url_for('models.view', model_id=model.id) }}" class="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent">
+                Model Information
+            </a>
+            <a href="{{ url_for('models.predict', model_id=model.id) }}" class="px-4 py-3 text-sm font-medium text-indigo-600 border-b-2 border-indigo-500" aria-current="page">
+                Make Predictions
+            </a>
+            <a href="{{ url_for('models.view_feedback', model_id=model.id) }}" class="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent">
+                Feedback
+            </a>
+        </nav>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col md:flex-row">
+        <!-- Input Form Panel -->
+        <div class="w-full md:w-2/5 bg-gray-50 p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-semibold">Interactive Model</h2>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-6">Adjust the feature values using the form below to see how they affect the prediction.</p>
+            
+            <form id="predictionForm" method="post" action="{{ url_for('models.predict', model_id=model.id) }}">
+                {{ form.csrf_token }}
+                
+                {% if form.errors %}
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <ul class="list-disc list-inside text-sm text-red-700">
+                                    {% for field, errors in form.errors.items() %}
+                                        {% for error in errors %}
+                                            <li>{{ form[field].label }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% for field in form if field.name != 'csrf_token' %}
+                    <div class="mb-4">
+                        <label for="{{ field.id }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label.text }}</label>
+                        <div class="relative rounded-md shadow-sm">
+                            {{ field(class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-3 pr-10 py-2 sm:text-sm border-gray-300 rounded-md", id=field.id) }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% if field.description %}
+                            <p class="mt-1 text-xs text-gray-500">{{ field.description }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <div class="flex gap-4 mt-6">
+                    <button type="reset" class="w-1/2 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset Values
+                    </button>
+                    <button type="submit" class="w-1/2 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Generate Prediction
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="w-full md:w-3/5 p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-semibold">Prediction Result</h2>
+            </div>
+            
+            {% if example_prediction %}
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                This is an <strong>example prediction</strong> with automatically populated values. Adjust the feature values on the left to generate your own custom predictions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div id="prediction-results">
+                {% if prediction is not none %}
+                    {% if model.model_type == 'regression' %}
+                        <div class="text-center mb-8">
+                            <div class="text-4xl font-bold text-indigo-600 mb-2" id="prediction-value">{{ "%.2f"|format(prediction) }}</div>
+                            <p class="text-gray-600">Predicted {{ model.target_column }}</p>
+                            
+                            <!-- Prediction Range Visualization -->
+                            <div class="bg-gray-100 rounded-lg p-4 my-6">
+                                {% set min_val = model.metrics.get('target_min', 0) %}
+                                {% set max_val = model.metrics.get('target_max', 100) %}
+                                {% set range = max_val - min_val %}
+                                {% set position = ((prediction - min_val) / range) * 100 %}
+                                {% set position = max(0, min(position, 100)) %}
+                                
+                                <div class="relative h-2 mb-2">
+                                    <div class="absolute w-full h-full bg-gradient-to-r from-blue-100 to-indigo-500 rounded-full"></div>
+                                    <div class="absolute h-4 w-4 bg-indigo-600 rounded-full shadow -mt-1 transform -translate-x-1/2" id="prediction-slider" style="left: {{ position }}%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>{{ min_val }}</span>
+                                    <span>{{ max_val }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Feature Contribution Analysis -->
+                            <div class="mt-8">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2">Feature Contribution Analysis</h3>
+                                <p class="text-xs text-gray-500 mb-4">This breakdown shows how each feature contributes to the final prediction.</p>
+                                
+                                <!-- Base Value -->
+                                <div class="mb-3">
+                                    <div class="flex justify-between mb-1 text-sm">
+                                        <span class="text-gray-600">Base (Intercept):</span>
+                                        <span class="font-medium" id="base-intercept">{{ "%.2f"|format(model.metrics.get('intercept', 0)) }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Feature Contributions -->
+                                {% set total_contribution = model.metrics.get('intercept', 0) %}
+                                {% set max_contribution = 0 %}
+                                {% set max_feature = "" %}
+                                
+                                <div id="feature-contributions">
+                                    {% for feature in model.feature_columns %}
+                                        {% set i = loop.index0 %}
+                                        {% set coefficients = model.metrics.get('coefficients', []) %}
+                                        {% set coef = coefficients[i] if i < coefficients|length else 0 %}
+                                        {% set value = form[feature].data %}
+                                        {% set contribution = coef * value|float %}
+                                        {% set total_contribution = total_contribution + contribution %}
+                                        
+                                        {% if abs(contribution)|float > abs(max_contribution)|float %}
+                                            {% set max_contribution = contribution %}
+                                            {% set max_feature = feature %}
+                                        {% endif %}
+                                        
+                                        <div class="mb-3 feature-row" data-feature="{{ feature }}" data-coefficient="{{ coef }}">
+                                            <div class="flex justify-between mb-1 text-sm">
+                                                <span class="text-gray-600">{{ feature }}:</span>
+                                                <span class="font-medium contribution-value {% if contribution >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                    {{ "%.2f"|format(coef) }} × <span class="feature-input-value">{{ value }}</span> = <span class="feature-contribution">{{ "%.2f"|format(contribution) }}</span>
+                                                </span>
+                                            </div>
+                                            <div class="relative h-2 bg-gray-100 rounded-full">
+                                                <div class="absolute h-full contribution-bar {% if contribution >= 0 %}bg-green-500{% else %}bg-red-500{% endif %} rounded-full" style="width: {{ min(abs(contribution) * 5, 100) }}%"></div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Total Prediction -->
+                                <div class="mt-6 pt-4 border-t border-gray-200">
+                                    <div class="flex justify-between mb-1 text-sm font-bold">
+                                        <span class="text-gray-600">Total Prediction:</span>
+                                        <span class="text-indigo-600" id="total-prediction">{{ "%.2f"|format(total_contribution) }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Key Insight -->
+                                <div class="mt-6 bg-blue-50 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        <p class="text-sm text-blue-700" id="key-insight">
+                                            Key Insight: The most influential feature in this prediction is 
+                                            <strong>{{ max_feature if max_feature else "none" }}</strong>
+                                            {% if max_contribution > 0 %} 
+                                            , which increases the prediction by {{ "%.2f"|format(max_contribution) }}.
+                                            {% elif max_contribution < 0 %}
+                                            , which decreases the prediction by {{ "%.2f"|format(abs(max_contribution)) }}.
+                                            {% else %}
+                                            .
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    {% else %}
+                        <!-- Classification Prediction Display -->
+                        <div class="text-center mb-8">
+                            <div class="text-4xl font-bold {% if prediction == 1 %}text-green-600{% else %}text-red-600{% endif %} mb-2">
+                                {% if prediction_label %}
+                                    {{ prediction_label }}
+                                {% else %}
+                                    Class {{ prediction }}
+                                {% endif %}
+                            </div>
+                            <p class="text-gray-600">Predicted class for {{ model.target_column }}</p>
+                        </div>
+                        
+                        {% if probabilities %}
+                            <div class="mt-8">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-4">Prediction Probabilities</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {% for label, prob in probabilities.items() %}
+                                        <div class="bg-white shadow rounded-lg overflow-hidden">
+                                            <div class="p-4">
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <h4 class="text-sm font-medium text-gray-900">{{ label }}</h4>
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                                        {% if prob == probabilities.values()|max %}
+                                                        bg-green-100 text-green-800
+                                                        {% else %}
+                                                        bg-gray-100 text-gray-800
+                                                        {% endif %}">
+                                                        {{ "%.2f"|format(prob * 100) }}%
+                                                    </span>
+                                                </div>
+                                                <div class="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="absolute h-full rounded-full
+                                                        {% if prob == probabilities.values()|max %}
+                                                        bg-gradient-to-r from-green-400 to-blue-500
+                                                        {% else %}
+                                                        bg-gray-400
+                                                        {% endif %}"
+                                                        style="width: {{ prob * 100 }}%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <div class="flex flex-col items-center justify-center py-12">
+                        <div class="bg-gray-100 rounded-full p-6 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">No prediction yet</h3>
+                        <p class="text-gray-500">Fill in the form and submit to generate a prediction</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Confirm Delete
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                Are you sure you want to delete the model "{{ model.name }}"? This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <form action="{{ url_for('models.delete', model_id=model.id) }}" method="post">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Delete
+                    </button>
+                </form>
+                <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="closeDeleteModal()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+// Live prediction updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all input fields
+    const inputs = document.querySelectorAll('#predictionForm input[type="number"], #predictionForm input[type="text"]');
+    const predictionResults = document.getElementById('prediction-results');
+    
+    if (!predictionResults) return;
+    
+    // Add event listeners to all input fields
+    inputs.forEach(input => {
+        input.addEventListener('input', updatePrediction);
+    });
+    
+    function updatePrediction() {
+        // Get base intercept value
+        const baseInterceptElement = document.getElementById('base-intercept');
+        if (!baseInterceptElement) return;
+        
+        const baseIntercept = parseFloat(baseInterceptElement.textContent);
+        let totalPrediction = baseIntercept;
+        let maxContribution = 0;
+        let maxFeature = "";
+        
+        // Process each feature row
+        const featureRows = document.querySelectorAll('.feature-row');
+        featureRows.forEach(row => {
+            const feature = row.getAttribute('data-feature');
+            const coefficient = parseFloat(row.getAttribute('data-coefficient'));
+            
+            // Find the input value for this feature
+            const input = document.querySelector(`input[name="${feature}"]`);
+            if (!input) return;
+            
+            const value = parseFloat(input.value) || 0;
+            const contribution = coefficient * value;
+            
+            // Update the feature row values
+            const inputValueEl = row.querySelector('.feature-input-value');
+            const contributionEl = row.querySelector('.feature-contribution');
+            const contributionBar = row.querySelector('.contribution-bar');
+            
+            if (inputValueEl) inputValueEl.textContent = value;
+            if (contributionEl) contributionEl.textContent = contribution.toFixed(2);
+            
+            // Update the contribution bar width and color
+            if (contributionBar) {
+                contributionBar.style.width = `${Math.min(Math.abs(contribution) * 5, 100)}%`;
+                if (contribution >= 0) {
+                    contributionBar.classList.remove('bg-red-500');
+                    contributionBar.classList.add('bg-green-500');
+                } else {
+                    contributionBar.classList.remove('bg-green-500');
+                    contributionBar.classList.add('bg-red-500');
+                }
+            }
+            
+            // Add to total prediction
+            totalPrediction += contribution;
+            
+            // Track max contribution
+            if (Math.abs(contribution) > Math.abs(maxContribution)) {
+                maxContribution = contribution;
+                maxFeature = feature;
+            }
+        });
+        
+        // Update prediction display
+        const predictionValueElement = document.getElementById('prediction-value');
+        if (predictionValueElement) {
+            predictionValueElement.textContent = totalPrediction.toFixed(2);
+        }
+        
+        // Update slider position
+        const sliderElement = document.getElementById('prediction-slider');
+        if (sliderElement) {
+            // Get min and max values from the display
+            const minValElement = document.querySelector('.flex.justify-between.text-xs.text-gray-500 span:first-child');
+            const maxValElement = document.querySelector('.flex.justify-between.text-xs.text-gray-500 span:last-child');
+            
+            if (minValElement && maxValElement) {
+                const minVal = parseFloat(minValElement.textContent);
+                const maxVal = parseFloat(maxValElement.textContent);
+                const range = maxVal - minVal;
+                
+                if (range > 0) {
+                    const position = ((totalPrediction - minVal) / range) * 100;
+                    sliderElement.style.left = `${Math.max(0, Math.min(position, 100))}%`;
+                }
+            }
+        }
+        
+        // Update total prediction
+        const totalPredictionElement = document.getElementById('total-prediction');
+        if (totalPredictionElement) {
+            totalPredictionElement.textContent = totalPrediction.toFixed(2);
+        }
+        
+        // Update key insight
+        const keyInsightElement = document.getElementById('key-insight');
+        if (keyInsightElement && maxFeature) {
+            let insightText = `Key Insight: The most influential feature in this prediction is <strong>${maxFeature}</strong>`;
+            
+            if (maxContribution > 0) {
+                insightText += `, which increases the prediction by ${Math.abs(maxContribution).toFixed(2)}.`;
+            } else if (maxContribution < 0) {
+                insightText += `, which decreases the prediction by ${Math.abs(maxContribution).toFixed(2)}.`;
+            } else {
+                insightText += `.`;
+            }
+            
+            keyInsightElement.innerHTML = insightText;
+        }
+    }
+});
+</script>
+{% endblock %} 

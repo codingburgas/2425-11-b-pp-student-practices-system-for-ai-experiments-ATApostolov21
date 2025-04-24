@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Experiment Platform{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        },
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'float-delayed': 'float 7s ease-in-out 2s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS -->
+    <style>
+        /* Add custom styles here */
+        .input-modern {
+            @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm rounded-md;
+        }
+        .btn-primary {
+            @apply px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md 
+                   hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105;
+        }
+        .btn-secondary {
+            @apply px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm 
+                   hover:bg-gray-50 transition-all duration-300;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    {% include 'components/navbar.html' %}
+    
+    <main class="container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-8">
+                    {% for category, message in messages %}
+                        <div class="p-4 rounded-md 
+                            {% if category == 'error' %}bg-red-50 border-l-4 border-red-500 text-red-700{% endif %}
+                            {% if category == 'success' %}bg-green-50 border-l-4 border-green-500 text-green-700{% endif %}
+                            {% if category == 'info' %}bg-blue-50 border-l-4 border-blue-500 text-blue-700{% endif %}
+                            {% if category == 'warning' %}bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700{% endif %}"
+                            role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

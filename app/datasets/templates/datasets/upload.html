@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Dataset - AI Experiment Platform{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[5%] right-[5%] w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-[15%] right-[25%] w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute top-[25%] right-[15%] w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div class="absolute -bottom-10 -left-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+    </div>
+    
+    <div class="max-w-3xl mx-auto">
+        <!-- Header section -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                Upload Your Dataset
+            </h1>
+            <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg">
+                Upload a CSV file to train machine learning models and gain insights.
+            </p>
+        </div>
+        
+        <!-- Card container -->
+        <div class="relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur-md opacity-20"></div>
+            <div class="relative bg-white rounded-xl shadow-xl p-8 backdrop-blur-sm border border-gray-100">
+                <!-- Form icon -->
+                <div class="flex justify-center mb-6">
+                    <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg ring-4 ring-white">
+                        <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Form description -->
+                <p class="mb-8 text-gray-600 text-center max-w-lg mx-auto">
+                    Upload a CSV file containing your dataset. This dataset can be used to train machine learning models.
+                    Make sure your CSV file is properly formatted with headers in the first row.
+                </p>
+                
+                <!-- Upload form -->
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {{ form.hidden_tag() }}
+                    
+                    <div>
+                        {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.name(class="block w-full focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                        </div>
+                        {% for error in form.name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.description.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.description(class="block w-full focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm h-32") }}
+                        </div>
+                        {% for error in form.description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.file.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition-colors duration-300">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                        <span>Upload a file</span>
+                                        {{ form.file(class="sr-only", id="file") }}
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">
+                                    CSV files only (MAX. 10MB)
+                                </p>
+                            </div>
+                        </div>
+                        <div id="file-name" class="mt-2 text-sm text-indigo-600 font-medium"></div>
+                        {% for error in form.file.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="flex items-center justify-between pt-4">
+                        <a href="{{ url_for('main.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300">
+                            <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Dashboard
+                        </a>
+                        
+                        {{ form.submit(class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+    
+    @keyframes blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+        33% {
+            transform: translate(30px, -30px) scale(1.1);
+        }
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('file');
+        const fileNameDisplay = document.getElementById('file-name');
+        const dropZone = fileInput.closest('div.border-dashed');
+        
+        // File input change handler
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+                
+                // Add success styling to drop zone
+                dropZone.classList.add('border-green-500');
+                dropZone.classList.add('bg-green-50');
+                dropZone.classList.remove('border-gray-300');
+            } else {
+                fileNameDisplay.textContent = '';
+                
+                // Reset drop zone styling
+                dropZone.classList.remove('border-green-500');
+                dropZone.classList.remove('bg-green-50');
+                dropZone.classList.add('border-gray-300');
+            }
+        });
+        
+        // Drag and drop functionality
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500');
+            dropZone.classList.add('bg-indigo-50');
+        });
+        
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            if (!fileInput.files.length) {
+                dropZone.classList.remove('border-indigo-500');
+                dropZone.classList.remove('bg-indigo-50');
+            }
+        });
+        
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                
+                // Trigger change event
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+    });
+</script>
+{% endblock %} 

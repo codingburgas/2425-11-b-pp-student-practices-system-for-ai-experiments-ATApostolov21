@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Register - AI Experiment Platform{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-600 opacity-5 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute bottom-1/4 right-1/3 w-80 h-80 bg-purple-600 opacity-5 rounded-full blur-3xl animate-float-delayed"></div>
+        <div class="absolute top-3/4 right-1/4 w-64 h-64 bg-blue-600 opacity-5 rounded-full blur-3xl animate-float-slow"></div>
+    </div>
+    
+    <div class="w-full max-w-md">
+        <!-- Card container with glass effect -->
+        <div class="relative">
+            <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur-md opacity-20"></div>
+            <div class="relative bg-white rounded-xl shadow-xl p-8 backdrop-blur-sm border border-gray-100">
+                <!-- Logo/icon -->
+                <div class="flex justify-center mb-6">
+                    <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-white">
+                        AI
+                    </div>
+                </div>
+                
+                <!-- Title -->
+                <h1 class="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-8">
+                    Create Account
+                </h1>
+                
+                <!-- Form -->
+                <form method="post" action="{{ url_for('auth.register') }}" class="space-y-5">
+                    {{ form.hidden_tag() }}
+                    
+                    <div>
+                        {{ form.username.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.username(class="block w-full pr-10 focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% for error in form.username.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.email.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.email(class="block w-full pr-10 focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% for error in form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.password.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.password(class="block w-full pr-10 focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% for error in form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.password2.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.password2(class="block w-full pr-10 focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% for error in form.password2.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.role.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        {{ form.role(class="block w-full focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm", onchange="toggleTeacherField()") }}
+                        {% for error in form.role.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div id="teacher-field" class="mb-0">
+                        {{ form.teacher.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.teacher(class="block w-full pr-10 focus:ring-indigo-500 focus:border-indigo-500 pl-4 py-3 border-gray-300 rounded-lg shadow-sm") }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                                </svg>
+                            </div>
+                        </div>
+                        {% for error in form.teacher.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="pt-2">
+                        {{ form.submit(class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105") }}
+                    </div>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Already have an account?</p>
+                    <a href="{{ url_for('auth.login') }}" class="mt-2 block text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                        Sign in instead
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleTeacherField();
+    });
+    
+    function toggleTeacherField() {
+        const roleField = document.getElementById('role');
+        const teacherField = document.getElementById('teacher-field');
+        
+        if (roleField.value === 'student') {
+            teacherField.style.display = 'block';
+        } else {
+            teacherField.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %} 

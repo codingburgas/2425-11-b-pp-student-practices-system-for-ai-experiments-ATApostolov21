@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Models - AI Experiment Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">
+                Compare Models
+            </h1>
+            <p class="text-gray-600">Compare performance of different models</p>
+        </div>
+        <div>
+            <a href="{{ url_for('models.list') }}" class="btn-secondary">
+                Back to Models
+            </a>
+        </div>
+    </div>
+    
+    {% if not models %}
+        <div class="bg-white rounded-lg shadow-xl p-8 text-center">
+            <div class="text-7xl mb-4">📊</div>
+            <h2 class="text-2xl font-bold mb-2">No Models Selected for Comparison</h2>
+            <p class="text-gray-600 mb-6">
+                Please select at least two models to compare their performance.
+            </p>
+            <a href="{{ url_for('models.list') }}" class="btn-primary">Select Models</a>
+        </div>
+    {% else %}
+        <!-- Model Selection Form -->
+        <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Models Selected for Comparison</h2>
+            
+            <form method="post" id="comparison-form">
+                {{ form.hidden_tag() }}
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dataset</th>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for model in models %}
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="model_ids" value="{{ model.id }}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" checked>
+                                            <span class="ml-2 text-sm font-medium text-gray-900">{{ model.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ 'bg-indigo-100 text-indigo-800' if model.model_type == 'regression' else 'bg-purple-100 text-purple-800' }}">
+                                            {{ model.model_type|title }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ model.dataset.name }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ model.target_column }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ model.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                        <a href="{{ url_for('models.view', model_id=model.id) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 flex flex-wrap gap-4">
+                    <div>
+                        {{ form.comparison_type.label(class="block text-gray-700 text-sm font-medium mb-2") }}
+                        {{ form.comparison_type(class="input-modern border-gray-300 rounded-lg shadow-sm") }}
+                    </div>
+                    
+                    <div>
+                        {{ form.metric.label(class="block text-gray-700 text-sm font-medium mb-2") }}
+                        {{ form.metric(class="input-modern border-gray-300 rounded-lg shadow-sm") }}
+                    </div>
+                    
+                    {% if form.test_data %}
+                    <div>
+                        {{ form.test_data.label(class="block text-gray-700 text-sm font-medium mb-2") }}
+                        {{ form.test_data(class="block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none") }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-6">
+                    {{ form.submit(class="btn-primary") }}
+                </div>
+            </form>
+        </div>
+        
+        {% if comparison_results %}
+        <!-- Comparison Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Performance Metrics Comparison -->
+            <div class="bg-white rounded-lg shadow-xl p-6">
+                <h2 class="text-xl font-semibold mb-6">Performance Metrics</h2>
+                <div class="h-80" id="metrics-chart-container">
+                    <!-- Metrics chart will be rendered here -->
+                </div>
+            </div>
+            
+            <!-- Feature Importance Comparison (if available) -->
+            <div class="bg-white rounded-lg shadow-xl p-6">
+                <h2 class="text-xl font-semibold mb-6">Feature Importance Comparison</h2>
+                {% if comparison_results.feature_importance %}
+                    <div class="h-80" id="feature-chart-container">
+                        <!-- Feature importance chart will be rendered here -->
+                    </div>
+                {% else %}
+                    <div class="flex items-center justify-center h-64 text-gray-400 italic">
+                        <p>Feature importance data not available for selected models</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Detailed Metrics Table -->
+        <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Detailed Metrics</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                            {% for metric in comparison_results.metrics.metric_names %}
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ metric|title }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for model_name, metrics in comparison_results.metrics.model_metrics.items() %}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ model_name }}</td>
+                                {% for metric in comparison_results.metrics.metric_names %}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        {% if metrics[metric] is not none %}
+                                            {{ "%.4f"|format(metrics[metric]) }}
+                                        {% else %}
+                                            <span class="text-gray-400">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Prediction Comparison (if available) -->
+        {% if comparison_results.predictions %}
+        <div class="bg-white rounded-lg shadow-xl p-6">
+            <h2 class="text-xl font-semibold mb-4">Prediction Comparison</h2>
+            <p class="text-gray-600 mb-4">Sample of predictions from test data (showing first 10 rows)</p>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
+                            {% for model_name in comparison_results.predictions.model_names %}
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ model_name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for i in range(comparison_results.predictions.sample_size) %}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ i + 1 }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ comparison_results.predictions.actual[i] }}</td>
+                                {% for model_name in comparison_results.predictions.model_names %}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 
+                                        {% if comparison_results.predictions.predictions[model_name][i] == comparison_results.predictions.actual[i] %}
+                                            text-green-600 font-medium
+                                        {% elif model_type == 'regression' and (comparison_results.predictions.predictions[model_name][i] - comparison_results.predictions.actual[i])|abs < 0.1 %}
+                                            text-yellow-600
+                                        {% endif %}">
+                                        {% if model_type == 'regression' %}
+                                            {{ "%.4f"|format(comparison_results.predictions.predictions[model_name][i]) }}
+                                        {% else %}
+                                            {{ comparison_results.predictions.predictions[model_name][i] }}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- JavaScript for Chart Rendering -->
+        <script>
+            // Save chart data as JSON for JavaScript
+            var chartData = {
+                modelNames: {{ comparison_results.metrics.model_names|tojson }},
+                metricNames: {{ comparison_results.metrics.metric_names|tojson }},
+                modelMetrics: {{ comparison_results.metrics.model_metrics|tojson }}
+                {% if comparison_results.feature_importance %},
+                featureImportance: {
+                    features: {{ comparison_results.feature_importance.features|tojson }},
+                    modelNames: {{ comparison_results.feature_importance.model_names|tojson }},
+                    importanceData: {{ comparison_results.feature_importance.importance|tojson }}
+                }
+                {% endif %}
+            };
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Helper color function
+                function getColor(index, alpha) {
+                    const colors = [
+                        `rgba(99, 102, 241, ${alpha})`,   // Indigo
+                        `rgba(139, 92, 246, ${alpha})`,   // Purple
+                        `rgba(236, 72, 153, ${alpha})`,   // Pink
+                        `rgba(14, 165, 233, ${alpha})`,   // Sky
+                        `rgba(34, 197, 94, ${alpha})`,    // Green
+                        `rgba(234, 179, 8, ${alpha})`,    // Yellow
+                        `rgba(249, 115, 22, ${alpha})`,   // Orange
+                        `rgba(239, 68, 68, ${alpha})`     // Red
+                    ];
+                    return colors[index % colors.length];
+                }
+                
+                // Render Metrics Chart
+                const metricsContainer = document.getElementById('metrics-chart-container');
+                if (metricsContainer) {
+                    const canvas = document.createElement('canvas');
+                    metricsContainer.appendChild(canvas);
+                    
+                    // Create datasets
+                    const datasets = [];
+                    chartData.metricNames.forEach((metric, index) => {
+                        const data = [];
+                        chartData.modelNames.forEach(modelName => {
+                            data.push(chartData.modelMetrics[modelName][metric] || null);
+                        });
+                        
+                        datasets.push({
+                            label: metric.charAt(0).toUpperCase() + metric.slice(1),
+                            data: data,
+                            backgroundColor: getColor(index, 0.7),
+                            borderColor: getColor(index, 1),
+                            borderWidth: 1
+                        });
+                    });
+                    
+                    // Create chart
+                    new Chart(canvas.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: chartData.modelNames,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: false }
+                            }
+                        }
+                    });
+                }
+                
+                // Render Feature Importance Chart (if available)
+                if (chartData.featureImportance) {
+                    const featureContainer = document.getElementById('feature-chart-container');
+                    if (featureContainer) {
+                        const canvas = document.createElement('canvas');
+                        featureContainer.appendChild(canvas);
+                        
+                        // Create datasets
+                        const datasets = [];
+                        chartData.featureImportance.modelNames.forEach((modelName, index) => {
+                            datasets.push({
+                                label: modelName,
+                                data: chartData.featureImportance.importanceData[modelName],
+                                backgroundColor: getColor(index, 0.7),
+                                borderColor: getColor(index, 1),
+                                borderWidth: 1
+                            });
+                        });
+                        
+                        // Create chart
+                        new Chart(canvas.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: chartData.featureImportance.features,
+                                datasets: datasets
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                indexAxis: 'y',
+                                scales: {
+                                    x: { beginAtZero: true }
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        </script>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %} 
